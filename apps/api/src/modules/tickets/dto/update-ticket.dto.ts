@@ -1,7 +1,11 @@
-import { IsIn, IsNotEmpty } from 'class-validator';
+import { IsIn, IsOptional, IsUUID } from 'class-validator';
 
 export class UpdateTicketDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsIn(['new', 'open', 'in_progress', 'pending', 'resolved', 'closed'])
-  status: 'new' | 'open' | 'in_progress' | 'pending' | 'resolved' | 'closed';
+  status?: 'new' | 'open' | 'in_progress' | 'pending' | 'resolved' | 'closed';
+
+  @IsOptional()
+  @IsUUID()
+  assignedTo?: string;
 }

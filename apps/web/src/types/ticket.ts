@@ -16,6 +16,7 @@ export interface Ticket {
   priority: TicketPriority;
   source: string;
   createdBy: string;
+  assignedTo: string | null;
   createdAt: string;
   updatedAt: string;
 }

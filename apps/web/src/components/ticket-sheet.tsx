@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { Ticket, TicketStatus, TicketPriority, ActivityItem } from '@/types/ticket';
+import { useAuthStore } from '@/store/auth-store';
 
 import {
   Sheet,
@@ -235,6 +236,15 @@ export function TicketSheet({ ticketId, onOpenChange }: TicketSheetProps) {
   const queryClient = useQueryClient();
   const open = ticketId !== null;
 
+  const currentUser = useAuthStore((s) => s.user);
+  const isAgentOrAdmin = currentUser?.role === 'agent' || currentUser?.role === 'admin';
+
+  const { data: usersList = [] } = useQuery<{ id: string; firstName: string; lastName: string; role: string }[]>({
+    queryKey: ['users'],
+    queryFn: () => api.get('/users').then((r) => r.data),
+    enabled: isAgentOrAdmin,
+  });
+
   const { data: ticket, isLoading: ticketLoading } = useQuery<Ticket>({
     queryKey: ['ticket', ticketId],
     queryFn: () => api.get<Ticket>(`/tickets/${ticketId}`).then((r) => r.data),
@@ -246,6 +256,17 @@ export function TicketSheet({ ticketId, onOpenChange }: TicketSheetProps) {
     queryFn: () =>
       api.get<ActivityItem[]>(`/tickets/${ticketId}/activity`).then((r) => r.data),
     enabled: open,
+  });
+
+  const assigneeMutation = useMutation({
+    mutationFn: (assignedTo: string) =>
+      api.patch<Ticket>(`/tickets/${ticketId}`, { assignedTo }).then((r) => r.data),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['ticket', ticketId], updated);
+      queryClient.invalidateQueries({ queryKey: ['ticket-activity', ticketId] });
+      toast.success('Assignee updated');
+    },
+    onError: () => toast.error('Failed to update assignee'),
   });
 
   const statusMutation = useMutation({
@@ -318,6 +339,31 @@ export function TicketSheet({ ticketId, onOpenChange }: TicketSheetProps) {
                   <span className="text-xs text-muted-foreground">Saving…</span>
                 )}
               </div>
+
+              {/* Assignee selector (agents/admins only) */}
+              {isAgentOrAdmin && (
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-xs font-medium text-muted-foreground">Assignee</span>
+                  <Select
+                    value={ticket.assignedTo ?? ''}
+                    onValueChange={(val) => { if (val) assigneeMutation.mutate(val); }}
+                  >
+                    <SelectTrigger className="h-7 w-[180px] text-xs">
+                      <SelectValue placeholder="Unassigned" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {usersList.filter(u => u.role === 'agent' || u.role === 'admin').map((u) => (
+                        <SelectItem key={u.id} value={u.id} className="text-xs">
+                          {u.firstName} {u.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {assigneeMutation.isPending && (
+                    <span className="text-xs text-muted-foreground">Saving…</span>
+                  )}
+                </div>
+              )}
             </SheetHeader>
 
             {/* ── Scrollable body ─────────────────────────────────────── */}

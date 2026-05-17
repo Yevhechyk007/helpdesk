@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -275,6 +275,111 @@ export default function TicketsPage() {
   const [page] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      let parsed: Array<{ title: string; description: string; priority?: string; status?: string }> = [];
+
+      if (file.name.endsWith('.json')) {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        parsed = Array.isArray(data) ? data : data.tickets ?? [];
+      } else if (file.name.endsWith('.csv')) {
+        const text = await file.text();
+        const lines = text.trim().split('\n');
+        const headers = lines[0].split(',').map((h) => h.trim().replace(/"/g, ''));
+        parsed = lines
+          .slice(1)
+          .map((line) => {
+            const values = line.split(',').map((v) => v.trim().replace(/"/g, ''));
+            const obj: Record<string, string> = {};
+            headers.forEach((h, i) => { obj[h] = values[i] ?? ''; });
+            return obj as { title: string; description: string; priority?: string; status?: string };
+          })
+          .filter((r) => r.title);
+      } else {
+        toast.error('Please select a .csv or .json file');
+        return;
+      }
+
+      if (parsed.length === 0) {
+        toast.error('No valid tickets found in file');
+        return;
+      }
+
+      const { data } = await api.post<{ imported: number; failed: number }>('/tickets/import', { tickets: parsed });
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      toast.success(`Imported ${data.imported} ticket(s)${data.failed > 0 ? `, ${data.failed} failed` : ''}`);
+    } catch {
+      toast.error('Import failed — check file format');
+    }
+
+    e.target.value = '';
+  }
+
+  async function handleExportPdf() {
+    try {
+      const { data } = await api.get<{ data: Ticket[] }>('/tickets', { params: { limit: 100 } });
+      const ticketList = data.data;
+
+      const { default: jsPDF } = await import('jspdf');
+      const doc = new jsPDF({ orientation: 'landscape' });
+
+      doc.setFontSize(16);
+      doc.text('Helpdesk — Ticket Report', 14, 16);
+      doc.setFontSize(10);
+      doc.text(`Generated: ${new Date().toLocaleString()}  |  Total tickets: ${ticketList.length}`, 14, 23);
+
+      const headers = ['ID (short)', 'Title', 'Status', 'Priority', 'Created'];
+      const colWidths = [28, 100, 28, 24, 40];
+      let y = 32;
+      const rowH = 7;
+
+      doc.setFillColor(30, 36, 30);
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      let x = 14;
+      headers.forEach((h, i) => {
+        doc.rect(x, y, colWidths[i], rowH, 'F');
+        doc.text(h, x + 2, y + 5);
+        x += colWidths[i];
+      });
+      y += rowH;
+
+      doc.setTextColor(0, 0, 0);
+      ticketList.forEach((t, idx) => {
+        if (y > 190) { doc.addPage(); y = 14; }
+        if (idx % 2 === 0) {
+          doc.setFillColor(248, 249, 250);
+          x = 14;
+          colWidths.forEach((w) => { doc.rect(x, y, w, rowH, 'F'); x += w; });
+        }
+        x = 14;
+        const row = [
+          t.id.slice(0, 8),
+          t.title.slice(0, 50),
+          t.status.replace('_', ' '),
+          t.priority,
+          new Date(t.createdAt).toLocaleDateString(),
+        ];
+        row.forEach((cell, i) => {
+          doc.text(String(cell), x + 2, y + 5);
+          x += colWidths[i];
+        });
+        y += rowH;
+      });
+
+      doc.save(`helpdesk-report-${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast.success('PDF report downloaded');
+    } catch {
+      toast.error('Failed to generate PDF');
+    }
+  }
 
   const { data, isLoading } = useQuery<TicketsResponse>({
     queryKey: ['tickets', { status: statusFilter, priority: priorityFilter, page }],
@@ -298,10 +403,25 @@ export default function TicketsPage() {
       {/* Heading row */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold tracking-tight">Tickets</h2>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus />
-          New Ticket
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleExportPdf}>
+            Export PDF
+          </Button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".csv,.json"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+          <Button variant="outline" onClick={() => importInputRef.current?.click()}>
+            Import
+          </Button>
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus />
+            New Ticket
+          </Button>
+        </div>
       </div>
 
       {/* Filter row */}

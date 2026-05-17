@@ -22,6 +22,7 @@ export class AuthService {
       password: dto.password,
       firstName: dto.firstName,
       lastName: dto.lastName,
+      role: dto.role,
     });
     return this.issueTokens(user);
   }

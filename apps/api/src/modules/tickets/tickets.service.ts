@@ -112,9 +112,9 @@ export class TicketsService {
     return ticket;
   }
 
-  // ─── Update status ────────────────────────────────────────────────────────
+  // ─── Update ───────────────────────────────────────────────────────────────
 
-  async updateStatus(
+  async update(
     id: string,
     dto: UpdateTicketDto,
     userId: string,
@@ -122,20 +122,54 @@ export class TicketsService {
   ): Promise<TicketRecord> {
     const ticket = await this.findOne(id, userId, userRole);
 
+    type TicketStatus = 'new' | 'open' | 'in_progress' | 'pending' | 'resolved' | 'closed';
+    type AuditAction = 'created' | 'updated' | 'assigned' | 'escalated' | 'status_changed' | 'commented' | 'attachment_added' | 'attachment_removed';
+
+    const setFields: Partial<{ status: TicketStatus; assignedTo: string; updatedAt: Date }> = {
+      updatedAt: new Date(),
+    };
+    const auditEntries: Array<{
+      entityType: string;
+      entityId: string;
+      action: AuditAction;
+      performedBy: string;
+      oldValues: Record<string, unknown>;
+      newValues: Record<string, unknown>;
+    }> = [];
+
+    if (dto.status && dto.status !== ticket.status) {
+      setFields.status = dto.status;
+      auditEntries.push({
+        entityType: 'ticket',
+        entityId: id,
+        action: 'status_changed',
+        performedBy: userId,
+        oldValues: { status: ticket.status },
+        newValues: { status: dto.status },
+      });
+    }
+
+    if (dto.assignedTo && dto.assignedTo !== ticket.assignedTo) {
+      setFields.assignedTo = dto.assignedTo;
+      auditEntries.push({
+        entityType: 'ticket',
+        entityId: id,
+        action: 'assigned',
+        performedBy: userId,
+        oldValues: { assignedTo: ticket.assignedTo ?? null },
+        newValues: { assignedTo: dto.assignedTo },
+      });
+    }
+
     const [updated] = await this.db
       .update(tickets)
-      .set({ status: dto.status, updatedAt: new Date() })
+      .set(setFields)
       .where(eq(tickets.id, id))
       .returning();
 
-    await this.db.insert(auditLogs).values({
-      entityType: 'ticket',
-      entityId: id,
-      action: 'status_changed',
-      performedBy: userId,
-      oldValues: { status: ticket.status },
-      newValues: { status: dto.status },
-    });
+    if (auditEntries.length > 0) {
+      await this.db.insert(auditLogs).values(auditEntries);
+    }
 
     return updated;
   }
@@ -240,6 +274,51 @@ export class TicketsService {
       .returning();
 
     return comment;
+  }
+
+  // ─── Import ───────────────────────────────────────────────────────────────
+
+  async importTickets(
+    items: Array<{ title: string; description: string; priority?: string; status?: string }>,
+    userId: string,
+  ): Promise<{ imported: number; failed: number; tickets: TicketRecord[] }> {
+    const results: TicketRecord[] = [];
+    let failed = 0;
+
+    for (const item of items) {
+      try {
+        const [ticket] = await this.db
+          .insert(tickets)
+          .values({
+            title: item.title,
+            description: item.description,
+            priority: (['low', 'medium', 'high', 'critical'].includes(item.priority ?? ''))
+              ? (item.priority as 'low' | 'medium' | 'high' | 'critical')
+              : 'medium',
+            status: (['new', 'open', 'in_progress', 'pending', 'resolved', 'closed'].includes(item.status ?? ''))
+              ? (item.status as 'new' | 'open' | 'in_progress' | 'pending' | 'resolved' | 'closed')
+              : 'new',
+            source: 'import',
+            createdBy: userId,
+            customerId: userId,
+          })
+          .returning();
+
+        await this.db.insert(auditLogs).values({
+          entityType: 'ticket',
+          entityId: ticket.id,
+          action: 'created',
+          performedBy: userId,
+          newValues: { title: ticket.title, status: ticket.status, priority: ticket.priority, source: 'import' },
+        });
+
+        results.push(ticket);
+      } catch {
+        failed++;
+      }
+    }
+
+    return { imported: results.length, failed, tickets: results };
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

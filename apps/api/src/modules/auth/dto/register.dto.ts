@@ -1,9 +1,4 @@
-import {
-  IsEmail,
-  IsString,
-  MinLength,
-  MaxLength,
-} from 'class-validator';
+import { IsEmail, IsString, MinLength, MaxLength, IsOptional, IsIn } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class RegisterDto {
@@ -25,4 +20,8 @@ export class RegisterDto {
   @MinLength(1)
   @MaxLength(100)
   lastName: string;
+
+  @IsOptional()
+  @IsIn(['customer', 'agent'])
+  role?: 'customer' | 'agent';
 }

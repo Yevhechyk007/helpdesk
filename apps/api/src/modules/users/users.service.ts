@@ -38,6 +38,20 @@ export class UsersService {
     return user;
   }
 
+  async findAll(): Promise<Pick<UserRecord, 'id' | 'firstName' | 'lastName' | 'email' | 'role'>[]> {
+    const allUsers = await this.db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.isActive, true));
+    return allUsers;
+  }
+
   async create(input: CreateUserInput): Promise<UserRecord> {
     const existing = await this.findByEmail(input.email);
     if (existing) {

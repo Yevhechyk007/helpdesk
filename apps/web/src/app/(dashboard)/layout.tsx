@@ -48,6 +48,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const initials = user ? getInitials(user.firstName, user.lastName) : 'U';
 
+  const visibleNavLinks = navLinks.filter((link) => {
+    if (link.href === '/dashboard/users' && user?.role === 'customer') return false;
+    return true;
+  });
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Narrow icon-only sidebar */}
@@ -62,7 +67,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         {/* Nav icons */}
         <nav className="flex flex-1 flex-col items-center gap-1 pt-2">
-          {navLinks.map(({ href, label, icon: Icon }) => {
+          {visibleNavLinks.map(({ href, label, icon: Icon }) => {
             const isActive =
               href === '/dashboard'
                 ? pathname === '/dashboard'
@@ -106,6 +111,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     {user.firstName} {user.lastName}
                   </p>
                   <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                  <p className="text-xs font-medium mt-0.5">
+                    <span className={cn(
+                      'inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-semibold capitalize',
+                      user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                      user.role === 'agent' ? 'bg-green-100 text-green-700' :
+                      'bg-blue-100 text-blue-700'
+                    )}>
+                      {user.role === 'customer' ? 'Klient' : user.role}
+                    </span>
+                  </p>
                 </div>
               )}
               <DropdownMenuItem

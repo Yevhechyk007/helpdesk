@@ -30,6 +30,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const registerSchema = z
   .object({
@@ -41,6 +48,7 @@ const registerSchema = z
       .min(8, 'Password must be at least 8 characters')
       .max(72),
     confirmPassword: z.string(),
+    role: z.enum(['customer', 'agent']),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -62,6 +70,7 @@ export default function RegisterPage() {
       email: '',
       password: '',
       confirmPassword: '',
+      role: 'customer',
     },
   });
 
@@ -73,6 +82,7 @@ export default function RegisterPage() {
         lastName: values.lastName,
         email: values.email,
         password: values.password,
+        role: values.role,
       });
 
       setAuth(data);
@@ -175,6 +185,27 @@ export default function RegisterPage() {
                       autoComplete="new-password"
                       {...field}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Account type</FormLabel>
+                  <FormControl>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="customer">Klient (Customer)</SelectItem>
+                        <SelectItem value="agent">Agent</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
