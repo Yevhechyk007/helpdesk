@@ -13,21 +13,27 @@ export const DRIZZLE = Symbol('DRIZZLE');
       provide: DRIZZLE,
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const connectionString = [
-          'postgresql://',
-          config.getOrThrow('POSTGRES_USER'),
-          ':',
-          config.getOrThrow('POSTGRES_PASSWORD'),
-          '@',
-          config.getOrThrow('POSTGRES_HOST'),
-          ':',
-          config.getOrThrow('POSTGRES_PORT'),
-          '/',
-          config.getOrThrow('POSTGRES_DB'),
-        ].join('');
+        const connectionString =
+          config.get<string>('DATABASE_URL') ??
+          [
+            'postgresql://',
+            config.getOrThrow('POSTGRES_USER'),
+            ':',
+            config.getOrThrow('POSTGRES_PASSWORD'),
+            '@',
+            config.getOrThrow('POSTGRES_HOST'),
+            ':',
+            config.getOrThrow('POSTGRES_PORT'),
+            '/',
+            config.getOrThrow('POSTGRES_DB'),
+          ].join('');
 
-        const client = postgres(connectionString, { max: 10 });
-        return drizzle(client, { schema, logger: process.env.NODE_ENV !== 'production' });
+        const isProduction = config.get('NODE_ENV') === 'production';
+        const client = postgres(connectionString, {
+          max: 10,
+          ssl: isProduction ? 'require' : false,
+        });
+        return drizzle(client, { schema, logger: !isProduction });
       },
     },
   ],
