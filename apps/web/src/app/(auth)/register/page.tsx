@@ -60,7 +60,13 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const accessToken = useAuthStore((state) => state.accessToken);
   const [isLoading, setIsLoading] = useState(false);
+
+  if (accessToken) {
+    router.replace('/dashboard');
+    return null;
+  }
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),

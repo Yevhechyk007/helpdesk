@@ -124,7 +124,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 </div>
               )}
               <DropdownMenuItem
-                onSelect={handleSignOut}
+                onClick={handleSignOut}
                 className="cursor-pointer text-red-600 focus:text-red-600 mt-1"
               >
                 <LogOut className="mr-2 size-3.5" />

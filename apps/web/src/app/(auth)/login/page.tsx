@@ -41,7 +41,14 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const accessToken = useAuthStore((state) => state.accessToken);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Client-side redirect if already authenticated
+  if (accessToken) {
+    router.replace('/dashboard');
+    return null;
+  }
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
