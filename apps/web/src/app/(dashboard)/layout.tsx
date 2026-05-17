@@ -3,25 +3,16 @@
 import { useEffect, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import {
-  LayoutDashboard,
-  Ticket,
-  Users,
-  LogOut,
-  Headphones,
-} from 'lucide-react';
+import { LayoutDashboard, Ticket, Users, LogOut, MessageSquare } from 'lucide-react';
 
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
 
 const navLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -55,83 +46,73 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     router.replace('/login');
   };
 
-  const displayName = user
-    ? `${user.firstName} ${user.lastName}`
-    : 'User';
-  const initials = user
-    ? getInitials(user.firstName, user.lastName)
-    : 'U';
+  const initials = user ? getInitials(user.firstName, user.lastName) : 'U';
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r bg-card">
-        {/* Logo */}
-        <div className="flex h-14 items-center gap-2 px-4">
-          <Headphones className="size-5 text-primary" />
-          <span className="font-semibold text-sm">Helpdesk</span>
+    <div className="flex h-screen overflow-hidden">
+      {/* Narrow icon-only sidebar */}
+      <aside
+        className="fixed inset-y-0 left-0 z-50 flex flex-col items-center"
+        style={{ width: 68, backgroundColor: '#1c241e' }}
+      >
+        {/* Logo area */}
+        <div className="flex h-16 w-full items-center justify-center">
+          <MessageSquare className="text-white" style={{ width: 16, height: 16 }} />
         </div>
-        <Separator />
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-2 py-3">
-          <ul className="space-y-0.5">
-            {navLinks.map(({ href, label, icon: Icon }) => {
-              const isActive =
-                href === '/dashboard'
-                  ? pathname === '/dashboard'
-                  : pathname.startsWith(href);
-              return (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    className={cn(
-                      'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    )}
-                  >
-                    <Icon className="size-4 shrink-0" />
-                    {label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+        {/* Nav icons */}
+        <nav className="flex flex-1 flex-col items-center gap-1 pt-2">
+          {navLinks.map(({ href, label, icon: Icon }) => {
+            const isActive =
+              href === '/dashboard'
+                ? pathname === '/dashboard'
+                : pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                title={label}
+                className={cn(
+                  'flex h-10 w-10 items-center justify-center rounded-xl transition-colors',
+                  isActive
+                    ? 'bg-[#a8e063]/20'
+                    : 'hover:bg-white/5'
+                )}
+              >
+                <Icon
+                  style={{ width: 20, height: 20 }}
+                  className={cn(
+                    isActive ? 'text-[#a8e063]' : 'text-[#8a9e8d]'
+                  )}
+                />
+              </Link>
+            );
+          })}
         </nav>
 
-        <Separator />
-
-        {/* User info at bottom */}
-        <div className="p-3">
+        {/* Bottom: user avatar with dropdown */}
+        <div className="mb-4">
           <DropdownMenu>
             <DropdownMenuTrigger
-              className={cn(
-                'flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left text-sm',
-                'hover:bg-muted transition-colors outline-none'
-              )}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-500 text-xs font-semibold text-white outline-none hover:opacity-90 transition-opacity"
+              title={user ? `${user.firstName} ${user.lastName}` : 'User'}
             >
-              <Avatar size="sm">
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium leading-none">
-                  {displayName}
-                </p>
-                <p className="truncate text-xs text-muted-foreground mt-0.5">
-                  {user?.email ?? ''}
-                </p>
-              </div>
+              {initials}
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="start" className="w-52">
-              <DropdownMenuSeparator />
+            <DropdownMenuContent side="right" align="end" className="w-44">
+              {user && (
+                <div className="px-2 py-1.5 border-b border-gray-100">
+                  <p className="text-xs font-medium text-gray-900 truncate">
+                    {user.firstName} {user.lastName}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                </div>
+              )}
               <DropdownMenuItem
-                variant="destructive"
                 onSelect={handleSignOut}
-                className="cursor-pointer"
+                className="cursor-pointer text-red-600 focus:text-red-600 mt-1"
               >
-                <LogOut className="size-4" />
+                <LogOut className="mr-2 size-3.5" />
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -139,44 +120,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      {/* Main area */}
-      <div className="flex flex-1 flex-col pl-60">
-        {/* Top header */}
-        <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card px-6">
-          <h1 className="text-sm font-semibold text-foreground">
-            {navLinks.find(({ href }) =>
-              href === '/dashboard'
-                ? pathname === '/dashboard'
-                : pathname.startsWith(href)
-            )?.label ?? 'Dashboard'}
-          </h1>
-          <DropdownMenu>
-            <DropdownMenuTrigger className="outline-none">
-              <Avatar size="sm">
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <div className="px-2 py-1.5">
-                <p className="text-sm font-medium">{displayName}</p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onSelect={handleSignOut}
-                className="cursor-pointer"
-              >
-                <LogOut className="size-4" />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </header>
-
-        {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
-      </div>
+      {/* Main content */}
+      <main
+        className="flex-1 overflow-y-auto bg-[#f9fafb]"
+        style={{ marginLeft: 68 }}
+      >
+        {children}
+      </main>
     </div>
   );
 }

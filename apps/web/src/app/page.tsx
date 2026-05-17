@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
+import { motion, type Variants } from 'framer-motion';
+import { buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 const features = [
@@ -50,12 +50,12 @@ const stats = [
   { value: '∞', label: 'Tickets handled' },
 ];
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, delay: i * 0.1, ease: [0.25, 0.4, 0.25, 1] },
+    transition: { duration: 0.5, delay: i * 0.1, ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number] },
   }),
 };
 
@@ -92,12 +92,12 @@ export default function WelcomePage() {
           <span className="font-semibold text-sm tracking-tight">Helpdesk</span>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" asChild className="text-white/60 hover:text-white hover:bg-white/10">
-            <Link href="/login">Sign in</Link>
-          </Button>
-          <Button asChild className="bg-white text-[#080808] hover:bg-white/90 font-medium">
-            <Link href="/register">Get started</Link>
-          </Button>
+          <Link href="/login" className={buttonVariants({ variant: 'ghost', className: 'text-white/60 hover:text-white hover:bg-white/10' })}>
+            Sign in
+          </Link>
+          <Link href="/register" className={buttonVariants({ className: 'bg-white text-[#080808] hover:bg-white/90 font-medium' })}>
+            Get started
+          </Link>
         </div>
       </nav>
 
@@ -140,21 +140,18 @@ export default function WelcomePage() {
             variants={fadeUp}
             className="flex items-center gap-4"
           >
-            <Button
-              asChild
-              size="lg"
-              className="bg-white text-[#080808] hover:bg-white/90 font-semibold px-6 h-11"
+            <Link
+              href="/register"
+              className={buttonVariants({ size: 'lg', className: 'bg-white text-[#080808] hover:bg-white/90 font-semibold px-6 h-11' })}
             >
-              <Link href="/register">Start for free</Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="ghost"
-              className="text-white/60 hover:text-white hover:bg-white/10 px-6 h-11"
+              Start for free
+            </Link>
+            <Link
+              href="/login"
+              className={buttonVariants({ size: 'lg', variant: 'ghost', className: 'text-white/60 hover:text-white hover:bg-white/10 px-6 h-11' })}
             >
-              <Link href="/login">Sign in →</Link>
-            </Button>
+              Sign in →
+            </Link>
           </motion.div>
         </div>
 

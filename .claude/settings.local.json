@@ -32,7 +32,32 @@
       "Bash(gh repo:*)",
       "Bash(powershell.exe -Command \"Get-Command gh -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
       "Bash(git add:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(ssh:*)",
+      "Bash(git push:*)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' api repos/Yevhechyk007/helpdesk --method PATCH --field default_branch=master)",
+      "Bash(railway --version)",
+      "Bash(powershell.exe:*)",
+      "Bash(export RAILWAY_TOKEN=b7bff68e-4e05-4f21-9adf-b0dedac62900)",
+      "Bash(curl:*)",
+      "Bash(RAILWAY_TOKEN=b7bff68e-4e05-4f21-9adf-b0dedac62900 node:*)",
+      "Bash(\"C:/Users/evgen/AppData/Roaming/npm/node_modules/@railway/cli/bin/railway.exe\" whoami:*)",
+      "Bash(\"C:/Users/evgen/AppData/Roaming/npm/node_modules/@railway/cli/bin/railway.exe\" --help)",
+      "Bash(git commit -m ':*)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Status:', d.get\\('status'\\), '\\\\nCreated:', d.get\\('createdAt'\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('serviceDetails',{}\\), indent=2\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('updated:', d.get\\('name'\\), '| build:', d.get\\('serviceDetails',{}\\).get\\('envSpecificDetails',{}\\).get\\('buildCommand',''\\)[:80]\\)\")",
+      "Bash(python3 -c ':*)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('OK:', d.get\\('serviceDetails',{}\\).get\\('envSpecificDetails',{}\\).get\\('buildCommand',''\\)[:120]\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Deploy:', d.get\\('id'\\), '| Status:', d.get\\('status'\\)\\)\")",
+      "Bash(echo \"Deleted: $?\")",
+      "Bash(git -C /c/Users/evgen/helpdesk ls-files packages/)",
+      "Bash(git -C /c/Users/evgen/helpdesk ls-files apps/api/Dockerfile)",
+      "Bash(git -C /c/Users/evgen/helpdesk add apps/api/Dockerfile)",
+      "Bash(git -C /c/Users/evgen/helpdesk commit -m ':*)",
+      "Bash(git -C /c/Users/evgen/helpdesk push)",
+      "Bash(git -C /c/Users/evgen/helpdesk add .dockerignore)",
+      "Bash(node_modules/.bin/tsc --noEmit)"
     ]
   }
 }
