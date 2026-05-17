@@ -1,34 +1,26 @@
-FROM node:20-alpine AS base
-RUN npm install -g pnpm@9.15.0
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install dependencies
-FROM base AS deps
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/shared/package.json ./packages/shared/
-RUN pnpm install --frozen-lockfile
+COPY apps/api/package.json ./
+RUN npm install
 
-# Build
-FROM deps AS builder
-COPY apps/api ./apps/api/
-COPY packages/shared ./packages/shared/
-RUN pnpm --filter @helpdesk/api build
+COPY apps/api/src ./src
+COPY apps/api/tsconfig.json ./
+COPY apps/api/tsconfig.build.json ./
+COPY apps/api/nest-cli.json ./
+
+RUN npx nest build
 
 # Production image
-FROM node:20-alpine AS runner
+FROM node:20-alpine
 WORKDIR /app
-RUN npm install -g pnpm@9.15.0
 
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/shared/package.json ./packages/shared/
+COPY apps/api/package.json ./
+RUN npm install --omit=dev
 
-RUN pnpm install --frozen-lockfile --prod
-
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/dist ./dist
 
 EXPOSE 3001
 ENV NODE_ENV=production
 
-CMD ["node", "apps/api/dist/main"]
+CMD ["node", "dist/main"]
