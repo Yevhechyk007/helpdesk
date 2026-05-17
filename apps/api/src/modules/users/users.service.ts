@@ -1,4 +1,4 @@
-import { Injectable, Inject, ConflictException } from '@nestjs/common';
+import { Injectable, Inject, ConflictException, NotFoundException } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
@@ -50,6 +50,28 @@ export class UsersService {
       .from(users)
       .where(eq(users.isActive, true));
     return allUsers;
+  }
+
+  async updateRole(
+    id: string,
+    role: 'admin' | 'agent' | 'customer',
+  ): Promise<Pick<UserRecord, 'id' | 'firstName' | 'lastName' | 'email' | 'role'>> {
+    const existing = await this.findById(id);
+    if (!existing) throw new NotFoundException('User not found');
+
+    const [updated] = await this.db
+      .update(users)
+      .set({ role })
+      .where(eq(users.id, id))
+      .returning({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        role: users.role,
+      });
+
+    return updated;
   }
 
   async create(input: CreateUserInput): Promise<UserRecord> {
