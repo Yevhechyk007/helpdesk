@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(curl -sv -X POST http://localhost:3001/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"test@test.com\",\"password\":\"Secret123!\",\"firstName\":\"Test\",\"lastName\":\"User\"}')",
+      "Bash(pkill -f \"nest start\")",
+      "Bash(pkill -f \"node.*helpdesk\")",
+      "Bash(node -e ':*)",
+      "Bash(timeout 15 node -e ':*)",
+      "Bash(npx nest:*)",
+      "Bash(node dist/main.js)",
+      "Bash(curl -s -X POST http://localhost:3001/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"alice@example.com\",\"password\":\"Secret123!\",\"firstName\":\"Alice\",\"lastName\":\"Smith\"}')",
+      "Bash(netstat -ano)",
+      "Bash(cmd:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(echo \"Server starting in background, PID: $!\")",
+      "Bash(curl -s -X POST http://localhost:3001/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"test@helpdesk.dev\",\"password\":\"Test1234!\",\"firstName\":\"Test\",\"lastName\":\"User\"}')",
+      "Bash(python -m json.tool)",
+      "Bash(pnpm db:migrate:*)",
+      "Skill(shadcn-ui)",
+      "Bash(pnpm --filter @helpdesk/api build)",
+      "Bash(npx shadcn@latest add dialog textarea select badge --yes)",
+      "Bash(npx shadcn@latest add dialog textarea select badge)",
+      "Bash(npx shadcn@latest:*)",
+      "Bash(pnpm:*)",
+      "Bash(curl -s -X POST http://localhost:3001/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"admin@helpdesk.dev\",\"password\":\"password123\"}')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/api/tickets)",
+      "Bash(curl -s http://localhost:3000/login)",
+      "Bash(xargs grep:*)",
+      "Bash(gh repo:*)",
+      "Bash(powershell.exe -Command \"Get-Command gh -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(git add:*)",
+      "Bash(git check-ignore:*)"
+    ]
+  }
+}

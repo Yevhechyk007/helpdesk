@@ -26,3 +26,6 @@ drizzle/meta/
 
 # Turbo
 .turbo/
+
+# Claude
+.claude/settings.local.json
