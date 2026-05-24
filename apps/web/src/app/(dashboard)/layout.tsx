@@ -3,7 +3,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Ticket, Users, LogOut, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Ticket, Users, LogOut, MessageSquare, Tag } from 'lucide-react';
 
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
@@ -13,11 +13,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { NotificationBell } from '@/components/notification-bell';
 
 const navLinks = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/dashboard/tickets', label: 'Tickets', icon: Ticket },
-  { href: '/dashboard/users', label: 'Users', icon: Users },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
+  { href: '/dashboard/tickets', label: 'Tickets', icon: Ticket, adminOnly: false },
+  { href: '/dashboard/users', label: 'Users', icon: Users, adminOnly: false },
+  { href: '/dashboard/categories', label: 'Categories', icon: Tag, adminOnly: true },
 ];
 
 function getInitials(firstName: string, lastName: string): string {
@@ -50,6 +52,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const visibleNavLinks = navLinks.filter((link) => {
     if (link.href === '/dashboard/users' && user?.role === 'customer') return false;
+    if (link.adminOnly && user?.role !== 'admin') return false;
     return true;
   });
 
@@ -94,6 +97,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
+
+        {/* Notification bell */}
+        <div className="mb-2">
+          <NotificationBell />
+        </div>
 
         {/* Bottom: user avatar with dropdown */}
         <div className="mb-4">

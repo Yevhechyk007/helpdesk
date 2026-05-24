@@ -94,6 +94,15 @@ export class TicketsController {
     return this.ticketsService.addComment(id, dto, user.id, user.role);
   }
 
+  @Post(':id/escalate')
+  @HttpCode(HttpStatus.OK)
+  escalate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: UserRecord,
+  ) {
+    return this.ticketsService.escalate(id, user.id, user.role);
+  }
+
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,

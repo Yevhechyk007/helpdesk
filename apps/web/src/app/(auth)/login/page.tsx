@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -43,12 +43,18 @@ export default function LoginPage() {
   const setAuth = useAuthStore((state) => state.setAuth);
   const accessToken = useAuthStore((state) => state.accessToken);
   const [isLoading, setIsLoading] = useState(false);
+  const redirected = useRef(false);
 
-  // Client-side redirect if already authenticated
-  if (accessToken) {
-    router.replace('/dashboard');
-    return null;
-  }
+  // Client-side redirect if already authenticated.
+  // useRef guards against double-firing in React 19 Strict Mode.
+  useEffect(() => {
+    if (accessToken && !redirected.current) {
+      redirected.current = true;
+      router.replace('/dashboard');
+    }
+  }, [accessToken, router]);
+
+  if (accessToken) return null;
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),

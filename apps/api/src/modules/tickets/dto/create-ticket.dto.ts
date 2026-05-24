@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsIn,
+  IsUUID,
   MaxLength,
 } from 'class-validator';
 
@@ -19,4 +20,8 @@ export class CreateTicketDto {
   @IsOptional()
   @IsIn(['low', 'medium', 'high', 'critical'])
   priority?: 'low' | 'medium' | 'high' | 'critical';
+
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
 }

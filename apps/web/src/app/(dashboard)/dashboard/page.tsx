@@ -25,6 +25,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
 import type { TicketsResponse } from '@/types/ticket';
+import { useAnalytics } from '@/hooks/use-analytics';
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 
@@ -341,6 +342,8 @@ export default function DashboardPage() {
     retry: false,
   });
 
+  const { data: analyticsData } = useAnalytics();
+
   if (isLoading) {
     return <DashboardSkeleton />;
   }
@@ -388,21 +391,21 @@ export default function DashboardPage() {
         {[
           {
             label: 'Open Tickets',
-            value: '142',
+            value: analyticsData?.openTickets ?? '…',
             icon: <Inbox size={18} className="text-gray-500" />,
             trend: '+12 from yesterday',
             trendColor: 'text-emerald-500',
           },
           {
             label: 'Resolved Today',
-            value: '38',
+            value: analyticsData?.resolvedToday ?? '…',
             icon: <CheckCircle2 size={18} className="text-gray-500" />,
             trend: '+5 vs avg',
             trendColor: 'text-emerald-500',
           },
           {
             label: 'SLA Met',
-            value: '96%',
+            value: analyticsData?.slaMet != null ? analyticsData.slaMet.toFixed(0) + '%' : '…',
             icon: <Zap size={18} className="text-gray-500" />,
             trend: '-2% this week',
             trendColor: 'text-red-400',

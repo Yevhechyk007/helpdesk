@@ -12,12 +12,14 @@ import {
   ticketComments,
   auditLogs,
   users,
+  notifications,
 } from '../../database/schema';
 import * as schema from '../../database/schema';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { ListTicketsDto } from './dto/list-tickets.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { SlaService } from '../sla/sla.service';
 
 export type TicketRecord = typeof tickets.$inferSelect;
 
@@ -26,6 +28,7 @@ export class TicketsService {
   constructor(
     @Inject(DRIZZLE)
     private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly slaService: SlaService,
   ) {}
 
   // ─── Create ───────────────────────────────────────────────────────────────
@@ -40,6 +43,7 @@ export class TicketsService {
         source: 'web',
         createdBy: userId,
         customerId: userId,
+        ...(dto.categoryId && { categoryId: dto.categoryId }),
       })
       .returning();
 
@@ -54,6 +58,14 @@ export class TicketsService {
         priority: ticket.priority,
       },
     });
+
+    if (dto.categoryId) {
+      await this.slaService.setDueAt(
+        ticket.id,
+        dto.categoryId,
+        ticket.priority,
+      );
+    }
 
     return ticket;
   }
@@ -319,6 +331,56 @@ export class TicketsService {
     }
 
     return { imported: results.length, failed, tickets: results };
+  }
+
+  // ─── Escalate ─────────────────────────────────────────────────────────────
+
+  async escalate(
+    ticketId: string,
+    userId: string,
+    userRole: string,
+  ): Promise<TicketRecord> {
+    if (userRole === 'customer') {
+      throw new ForbiddenException('Customers cannot escalate tickets');
+    }
+
+    const ticket = await this.findOne(ticketId, userId, userRole);
+
+    if (ticket.status === 'resolved' || ticket.status === 'closed') {
+      throw new ForbiddenException('Cannot escalate a resolved or closed ticket');
+    }
+
+    const [updated] = await this.db
+      .update(tickets)
+      .set({ status: 'open', updatedAt: new Date() })
+      .where(eq(tickets.id, ticketId))
+      .returning();
+
+    await this.db.insert(auditLogs).values({
+      entityType: 'ticket',
+      entityId: ticketId,
+      action: 'escalated',
+      performedBy: userId,
+      oldValues: { status: ticket.status },
+      newValues: { status: 'open' },
+    });
+
+    if (ticket.assignedTo) {
+      const [assignee] = await this.db
+        .select({ supervisorId: users.supervisorId })
+        .from(users)
+        .where(eq(users.id, ticket.assignedTo));
+
+      if (assignee?.supervisorId) {
+        await this.db.insert(notifications).values({
+          userId: assignee.supervisorId,
+          ticketId,
+          type: 'escalated',
+        });
+      }
+    }
+
+    return updated;
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
